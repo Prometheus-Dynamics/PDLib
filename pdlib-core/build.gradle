@@ -1,0 +1,5 @@
+dependencies {
+    // Shared utilities live here (kept intentionally small for now).
+    api "com.fasterxml.jackson.core:jackson-databind:${rootProject.ext.jacksonVersion}"
+}
+

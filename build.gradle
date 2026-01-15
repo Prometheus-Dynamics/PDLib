@@ -1,0 +1,100 @@
+def loadDotEnv(File dotEnvFile) {
+    Map<String, String> values = [:]
+    if (!dotEnvFile.exists()) return values
+
+    dotEnvFile.eachLine { raw ->
+        String line = raw == null ? '' : raw.trim()
+        if (line.isEmpty() || line.startsWith('#')) return
+        if (line.startsWith('export ')) {
+            line = line.substring('export '.length()).trim()
+        }
+
+        int eq = line.indexOf('=')
+        if (eq <= 0) return
+
+        String key = line.substring(0, eq).trim()
+        if (!(key ==~ /[A-Za-z_][A-Za-z0-9_]*/)) return
+
+        String value = line.substring(eq + 1).trim()
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1)
+        }
+
+        values[key] = value
+    }
+    return values
+}
+
+def dotEnv = loadDotEnv(rootProject.file('.env'))
+
+ext {
+    // Keep defaults flexible; downstream can pin via -PwpilibVersion=... / -PpdlibVersion=...
+    wpilibVersion = (findProperty('wpilibVersion') ?: '2026.+').toString()
+    jacksonVersion = (findProperty('jacksonVersion') ?: '2.18.2').toString()
+    pdlibVersion = (findProperty('pdlibVersion') ?: '2026.0.0').toString()
+    mavenOnlineUrl = (findProperty('mavenOnlineUrl') ?: dotEnv['MAVEN_ONLINE_URL'] ?: 'https://maven.pdlib.local/PDLib').toString()
+    mavenOnlineUser = (findProperty('mavenOnlineUser') ?: dotEnv['MAVEN_ONLINE_USER'] ?: '').toString()
+    mavenOnlinePassword = (findProperty('mavenOnlinePassword') ?: dotEnv['MAVEN_ONLINE_PASSWORD'] ?: '').toString()
+}
+
+allprojects {
+    group = (findProperty('groupId') ?: 'ca.pd.lib').toString()
+    version = rootProject.ext.pdlibVersion
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://frcmaven.wpi.edu/artifactory/release' }
+        maven { url 'https://frcmaven.wpi.edu/artifactory/development' }
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        withSourcesJar()
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifactId = project.name
+            }
+        }
+
+        repositories {
+            maven {
+                name = 'Online'
+                url = uri(rootProject.ext.mavenOnlineUrl)
+
+                if (!rootProject.ext.mavenOnlineUser.isBlank() && !rootProject.ext.mavenOnlinePassword.isBlank()) {
+                    credentials {
+                        username = rootProject.ext.mavenOnlineUser
+                        password = rootProject.ext.mavenOnlinePassword
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register('publishToMavenOnline') {
+    group = 'publishing'
+    description = 'Publishes pdlib-core and pdlib-helios to the configured online Maven repository.'
+    dependsOn(
+            ':pdlib-core:publishMavenJavaPublicationToOnlineRepository',
+            ':pdlib-helios:publishMavenJavaPublicationToOnlineRepository'
+    )
+}

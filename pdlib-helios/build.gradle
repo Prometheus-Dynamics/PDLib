@@ -1,0 +1,10 @@
+dependencies {
+    api project(':pdlib-core')
+
+    // Robot projects already carry WPILib; keep it as compileOnly to avoid forcing extra vendordep deps.
+    compileOnly "edu.wpi.first.ntcore:ntcore-java:${rootProject.ext.wpilibVersion}"
+    compileOnly "edu.wpi.first.wpiutil:wpiutil-java:${rootProject.ext.wpilibVersion}"
+    compileOnly "edu.wpi.first.wpilibj:wpilibj-java:${rootProject.ext.wpilibVersion}"
+    compileOnly "edu.wpi.first.wpimath:wpimath-java:${rootProject.ext.wpilibVersion}"
+    compileOnly "edu.wpi.first.wpiunits:wpiunits-java:${rootProject.ext.wpilibVersion}"
+}

@@ -1,0 +1,6 @@
+rootProject.name = 'PDLib'
+
+include 'pdlib-core'
+include 'pdlib-helios'
+include 'pdlib-examples'
+include 'pdlib-test'

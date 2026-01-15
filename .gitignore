@@ -1,0 +1,8 @@
+**/build/**
+/gradle
+# /.vscode
+.env
+/.gradle
+/bin
+/target
+*/bin/*

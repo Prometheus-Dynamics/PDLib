@@ -1,0 +1,30 @@
+dependencies {
+    testImplementation project(':pdlib-helios')
+
+    // pdlib-helios uses WPILib types in public signatures; include at test runtime here.
+    testRuntimeOnly "edu.wpi.first.ntcore:ntcore-java:${rootProject.ext.wpilibVersion}"
+    testRuntimeOnly "edu.wpi.first.wpiutil:wpiutil-java:${rootProject.ext.wpilibVersion}"
+    testRuntimeOnly "edu.wpi.first.wpilibj:wpilibj-java:${rootProject.ext.wpilibVersion}"
+    testRuntimeOnly "edu.wpi.first.wpimath:wpimath-java:${rootProject.ext.wpilibVersion}"
+    testRuntimeOnly "edu.wpi.first.wpiunits:wpiunits-java:${rootProject.ext.wpilibVersion}"
+}
+
+tasks.withType(Test).configureEach {
+    // Enable with: -Dhelios.it=true or -PheliosIt=true
+    systemProperty 'helios.it',
+            System.getProperty('helios.it',
+                    (findProperty('heliosIt') ?: 'false').toString())
+
+    // Target can be set via -Dhelios.target=... or -PheliosTarget=... or HELIOS_TARGET env.
+    def target = System.getProperty('helios.target')
+    if (!target) {
+        target = (findProperty('heliosTarget') ?: System.getenv('HELIOS_TARGET') ?: '172.31.250.1').toString()
+    }
+    systemProperty 'helios.target', target
+
+    def timeoutSec = System.getProperty('helios.timeoutSec')
+    if (!timeoutSec) {
+        timeoutSec = (findProperty('heliosTimeoutSec') ?: '20').toString()
+    }
+    systemProperty 'helios.timeoutSec', timeoutSec
+}
